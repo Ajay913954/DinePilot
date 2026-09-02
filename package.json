@@ -1,0 +1,25 @@
+{
+  "name": "dinepilot-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev --workspace=@dinepilot/web",
+    "dev:api": "npm run dev --workspace=@dinepilot/api",
+    "build": "npm run build --workspaces",
+    "build:types": "npm run build --workspace=@dinepilot/types",
+    "build:validation": "npm run build --workspace=@dinepilot/validation",
+    "lint": "npm run lint --workspaces",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:studio": "npx prisma studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.0"
+  }
+}
