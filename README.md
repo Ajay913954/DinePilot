@@ -3,7 +3,7 @@
 > **Your Restaurant's AI Business Partner**  
 > *Run Your Restaurant Smarter.*
 
-DinePilot brings reservations, customer CRM, WhatsApp communication, marketing automation, reviews, and AI-powered intelligence into one unified commercial platform.
+DinePilot brings table management, reservations, customer CRM, WhatsApp communication, marketing automation, reviews, and AI-powered intelligence into one unified commercial SaaS platform.
 
 ---
 
@@ -18,12 +18,13 @@ dinepilot/
 │   └── api/              # Node.js + Express + TypeScript Backend API
 │
 ├── packages/
-│   ├── types/            # Shared TypeScript domain contracts & DTOs
-│   ├── validation/       # Shared Zod validation schemas (Auth, Restaurant)
+│   ├── types/            # Shared TypeScript domain contracts & DTOs (Auth, Table, Reservation, Customer)
+│   ├── validation/       # Shared Zod validation schemas
 │   └── config/           # Shared TypeScript base configuration
 │
 ├── prisma/
 │   ├── schema.prisma     # PostgreSQL Database Schema & Relationships
+│   ├── migrations/       # Version-controlled database schema migrations
 │   └── seed.ts           # Development seed script
 │
 ├── docs/                 # Architectural specifications & API guides
@@ -35,15 +36,56 @@ dinepilot/
 
 ---
 
-## 🔒 Authentication & Session Architecture
+## 🚀 Completed Modules & Capabilities
 
-DinePilot uses a secure, production-ready session authentication strategy:
+### 🔐 Day 1 & Day 2 — Secure Authentication & Multi-Tenant Infrastructure
+- **PostgreSQL & Prisma ORM**: Relational schema covering `User`, `Session`, `Restaurant`, `RestaurantUser`, `Role` (`OWNER`, `MANAGER`, `STAFF`).
+- **Session Protection**: Delivered via `HttpOnly`, `SameSite=Lax` cookies (`dinepilot_session`). Database stores SHA-256 hashes (`Session.tokenHash`) rather than raw tokens.
+- **Password Hashing**: Passwords hashed using `bcrypt` (salt factor 10). Plaintext credentials never logged or returned.
+- **Tenant Isolation**: Every database query is strictly scoped by `restaurantId` derived from the authenticated session context (`requireRestaurantAccess`).
 
-- **Session Tokens**: 256-bit secure random tokens generated on authentication.
-- **Database Storage**: Raw session tokens are **never** stored in the database. Only a SHA-256 hash (`Session.tokenHash`) is saved.
-- **Cookie Protection**: Delivered via `HttpOnly`, `SameSite=Lax` (and `Secure` in production) cookies (`dinepilot_session`). Frontend JavaScript cannot read or extract the session token.
-- **Password Security**: Passwords are hashed using `bcrypt` (salt factor 10). Plaintext credentials are never saved, logged, or returned in API responses.
-- **Tenant Isolation**: User authorization is verified on every request using `RestaurantUser` relationships (`requireRestaurantAccess`). Users of Restaurant A cannot access Restaurant B data (403 Forbidden).
+### 🏪 Day 3 — Restaurant Onboarding, Profile & Settings
+- **Multi-Step Onboarding Wizard**: Guided setup for restaurant details, location, timezone (`Asia/Kolkata` default), and operating hours.
+- **Automatic Slug Generation**: URL-friendly slug generation (`the-spice-house`, `the-spice-house-1`) with collision resolution.
+- **Public Profile (`/r/:slug`)**: Accessible unauthenticated route displaying public dining info while masking internal tenant data.
+- **Role-Based Authorization**: `requireRestaurantRole(['OWNER', 'MANAGER'])` middleware enforcing permissions.
+
+### 🍽️ Day 4 — Table Management & Centralized Reservation Engine
+- **Table Management**: Table CRUD, location (`INDOOR`, `OUTDOOR`, `PRIVATE`, `BAR`, `OTHER`), status (`AVAILABLE`, `RESERVED`, `OCCUPIED`, `CLEANING`, `DISABLED`), and soft deletion (`isActive = false`).
+- **Central Availability Engine**: Unified availability validation for Dashboard, Public Website, QR, WhatsApp, and AI. Handles past date rejection, operating hours check, exact time overlap calculation (`existing.start < req.end AND existing.end > req.start`), and smallest fitting table capacity matching (`capacity ASC`).
+- **PostgreSQL Transaction Locking**: Executes reservation creation inside `prisma.$transaction` with row-level lock `SELECT ... FOR UPDATE` to eliminate concurrent double-booking race conditions.
+- **Status State Machine**: Enforces valid transitions (`PENDING` → `CONFIRMED` → `SEATED` → `COMPLETED`, `CANCELLED`, `NO_SHOW`) and updates table operational statuses automatically.
+
+### 👥 Day 5 — Customer CRM, Profiles & Customer Intelligence
+- **E.164 Phone Normalization**: Normalizes input variations (`+91 98765 43210`, `919876543210`, `09876543210`, `9876543210`) into canonical `+919876543210` for zero-duplicate customer resolution.
+- **Customer Profiles**: Supports DOB, internal staff notes, VIP status flag, preferred seating, dietary preferences, special occasions, and tags.
+- **Classification Engine**: Dynamic categorization into `NEW` (0 visits), `RETURNING` (>=1 visits), `VIP` (`isVip = true`), and `INACTIVE` (> 90 days since last visit).
+- **Customer Tagging System**: Relational tags (`CustomerTag`, `CustomerTagAssignment`) per restaurant tenant.
+- **Transactional Safe Merge**: `mergeCustomers` reassigns all reservations and tags from duplicate secondary customer to primary customer, appends internal notes, and deletes secondary record safely inside a database transaction.
+- **Interactive CRM UI**:
+  - **Customer Directory (`/dashboard/customers`)**: Debounced search (name, phone, email), classification filter tabs, VIP filter, responsive data table, pagination, Add Customer Modal, Merge Modal.
+  - **Customer Profile (`/dashboard/customers/:id`)**: Header with VIP toggle, Quick Stats grid, Guest Intelligence card, Staff Notes editor, Tags manager, and Reservation History Timeline.
+  - **Live Dashboard Metrics**: Connects `totalCustomers`, `newCustomers`, `returningCustomers`, and `vipCustomers` to real PostgreSQL queries.
+
+---
+
+## 🗄️ Database Schema Blueprint
+
+```mermaid
+erDiagram
+    User ||--o{ RestaurantUser : "has memberships"
+    User ||--o{ Session : "has sessions"
+    Restaurant ||--o{ RestaurantUser : "belongs to"
+    Restaurant ||--o{ Table : "owns"
+    Restaurant ||--o{ Customer : "manages"
+    Restaurant ||--o{ CustomerTag : "owns tags"
+    Restaurant ||--o{ Reservation : "has bookings"
+    Restaurant ||--o{ AuditLog : "records"
+    Customer ||--o{ Reservation : "places"
+    Customer ||--o{ CustomerTagAssignment : "tagged with"
+    CustomerTag ||--o{ CustomerTagAssignment : "assigned to"
+    Table ||--o{ Reservation : "assigned to"
+```
 
 ---
 
@@ -53,7 +95,7 @@ Copy `.env.example` to `.env`:
 
 | Environment Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string (`postgresql://[USER]:[PASSWORD]@[HOST]:[PORT]/[DB]?schema=public`) |
+| `DATABASE_URL` | PostgreSQL connection string (`postgresql://postgres:root@localhost:5432/dinepilot?schema=public`) |
 | `SESSION_SECRET` | Secret key for session encryption & cookie signing |
 | `NODE_ENV` | Application environment (`development`, `production`, `test`) |
 | `PORT` | Backend Express server port (Default: `5000`) |
@@ -62,30 +104,27 @@ Copy `.env.example` to `.env`:
 
 ---
 
-## 💻 Development & Testing Commands
+## 💻 Development & Test Commands
 
 | Command | Action |
 |---|---|
 | `npm run dev` | Start both Frontend (`http://localhost:5173`) and Backend API (`http://localhost:5000`) concurrently |
-| `npm run dev:web` | Start Frontend Web App only |
-| `npm run dev:api` | Start Backend Express API only |
-| `npm run build` | Compile and build all workspace packages and apps |
+| `npm run build` | Compile and build all workspace packages (`@dinepilot/types`, `@dinepilot/validation`, `@dinepilot/api`, `@dinepilot/web`, `@dinepilot/config`) |
 | `npm run prisma:generate` | Generate Prisma Client |
 | `npm run prisma:migrate` | Run Prisma database migrations (`prisma migrate dev`) |
 | `npm run prisma:seed` | Run development database seed script |
 | `npm run prisma:studio` | Open Prisma Studio GUI for database visual inspection |
 | `npx tsx apps/api/src/tests/run_auth_tests.ts` | Run authentication engine verification tests |
-| `npx tsx apps/api/src/tests/run_password_tests.ts` | Run password hashing & security verification tests |
 | `npx tsx apps/api/src/tests/run_security_tenant_tests.ts` | Run multi-tenant boundary isolation & token security tests |
+| `npx tsx apps/api/src/tests/run_day3_onboarding_tests.ts` | Run restaurant onboarding & slug collision tests |
+| `npx tsx apps/api/src/tests/run_day4_reservation_tests.ts` | Run reservation engine, concurrency locking & availability tests |
+| `npx tsx apps/api/src/tests/run_day5_customer_crm_tests.ts` | Run Day 5 Customer CRM, phone normalization, classification & merge tests |
 
 ---
 
-## 🗺️ Roadmap & Checkpoints
+## 🔒 Security & Multi-Tenant Boundaries
 
-- [x] **DAY 1**: Monorepo Workspace, TypeScript, Tailwind CSS, React Router v7, Express skeleton, Landing Page.
-- [x] **DAY 2 — CHECKPOINT 1**: PostgreSQL Database setup, Prisma Schema definition (`User`, `Session`, `Restaurant`, `RestaurantUser`, `Role`) & Migration (`20260904134248_day2_auth_schema`).
-- [x] **DAY 2 — CHECKPOINT 2**: Reusable password hashing (`hashPassword`) & verification (`verifyPassword`).
-- [x] **DAY 2 — CHECKPOINT 3**: Registration API (`POST /api/auth/register`), email normalization, duplicate email detection (`EMAIL_ALREADY_EXISTS` 409).
-- [x] **DAY 2 — CHECKPOINT 4**: Login (`POST /api/auth/login`), Logout (`POST /api/auth/logout`), Current User (`GET /api/auth/me`), `requireAuth` middleware, HttpOnly cookies, and rate limiting (`authLimiter`).
-- [x] **DAY 2 — CHECKPOINT 5**: Frontend Auth integration (`AuthContext`), Login UI, Signup UI, `ProtectedRoute` & `PublicRoute` guards.
-- [x] **DAY 2 — CHECKPOINT 6**: Security verification (SHA256 session token hashing, password hash isolation) and multi-tenant isolation tests.
+- **Tenant Isolation**: Every database operation verifies tenant authorization via `restaurantId`. Cross-tenant requests return `403 Forbidden` / `404 Not Found`.
+- **Role Enforcement**: Sensitive operations (`mergeCustomers`, `deleteTable`, `deleteCustomer`, `addTag`) require `OWNER` or `MANAGER` roles via `requireRestaurantRole`.
+- **Privacy Protection**: Internal customer notes are kept strictly private on authenticated backend routes and are never exposed on public restaurant endpoints (`/r/:slug`).
+- **Data Veracity**: 100% of displayed operational and customer metrics come directly from real PostgreSQL queries with zero hardcoded or fake numbers.
