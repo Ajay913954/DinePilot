@@ -248,3 +248,93 @@ export const customerApi = {
       method: 'DELETE',
     }),
 };
+
+export const menuApi = {
+  getCategories: () =>
+    fetchApi<{ categories: any[] }>('/menu/categories', {
+      method: 'GET',
+    }),
+
+  createCategory: (input: { name: string; description?: string; isActive?: boolean }) =>
+    fetchApi<{ category: any }>('/menu/categories', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updateCategory: (id: string, input: { name?: string; description?: string; isActive?: boolean }) =>
+    fetchApi<{ category: any }>(`/menu/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+
+  deleteCategory: (id: string, force: boolean = false) =>
+    fetchApi<{ category: any }>(`/menu/categories/${id}${force ? '?force=true' : ''}`, {
+      method: 'DELETE',
+    }),
+
+  reorderCategories: (categoryIds: string[]) =>
+    fetchApi<{ success: boolean }>('/menu/categories/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ categoryIds }),
+    }),
+
+  getMenuItems: (filters: {
+    categoryId?: string;
+    search?: string;
+    isAvailable?: boolean;
+    isVegetarian?: boolean;
+    isVegan?: boolean;
+    isSpicy?: boolean;
+  }) => {
+    const query = new URLSearchParams();
+    if (filters.categoryId) query.append('categoryId', filters.categoryId);
+    if (filters.search) query.append('search', filters.search);
+    if (filters.isAvailable !== undefined) query.append('isAvailable', String(filters.isAvailable));
+    if (filters.isVegetarian !== undefined) query.append('isVegetarian', String(filters.isVegetarian));
+    if (filters.isVegan !== undefined) query.append('isVegan', String(filters.isVegan));
+    if (filters.isSpicy !== undefined) query.append('isSpicy', String(filters.isSpicy));
+
+    return fetchApi<{ items: any[] }>(`/menu/items?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  createMenuItem: (input: any) =>
+    fetchApi<{ item: any }>('/menu/items', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updateMenuItem: (id: string, input: any) =>
+    fetchApi<{ item: any }>(`/menu/items/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+
+  toggleItemAvailability: (id: string, isAvailable: boolean) =>
+    fetchApi<{ item: any }>(`/menu/items/${id}/availability`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isAvailable }),
+    }),
+
+  deleteMenuItem: (id: string) =>
+    fetchApi<{ item: any }>(`/menu/items/${id}`, {
+      method: 'DELETE',
+    }),
+
+  reorderMenuItems: (categoryId: string, itemIds: string[]) =>
+    fetchApi<{ success: boolean }>('/menu/items/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ categoryId, itemIds }),
+    }),
+
+  getMenuStats: () =>
+    fetchApi<{ stats: any }>('/menu/stats', {
+      method: 'GET',
+    }),
+
+  getPublicMenu: (slug: string) =>
+    fetchApi<any>(`/menu/public/${slug}`, {
+      method: 'GET',
+    }),
+};

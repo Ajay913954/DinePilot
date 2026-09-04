@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, setMobileO
     { label: 'Reservations', path: '/reservations', icon: Calendar, active: true },
     { label: 'Customers', path: '/customers', icon: Users, active: true },
     { label: 'Tables', path: '/tables', icon: Grid3X3, active: true },
-    { label: 'Menu', path: '/menu', icon: UtensilsCrossed, active: false },
+    { label: 'Menu', path: '/menu', icon: UtensilsCrossed, active: true },
     { label: 'AI Assistant', path: '/ai-assistant', icon: Bot, active: false },
     { label: 'Marketing', path: '/marketing', icon: Megaphone, active: false },
     { label: 'Reviews', path: '/reviews', icon: Star, active: false },

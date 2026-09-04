@@ -11,6 +11,7 @@ import { ReservationsPage } from '../pages/ReservationsPage';
 import { CustomersPage } from '../pages/CustomersPage';
 import { CustomerProfilePage } from '../pages/CustomerProfilePage';
 import { PublicRestaurantPage } from '../pages/PublicRestaurantPage';
+import { MenuPage } from '../pages/MenuPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -165,8 +166,20 @@ export const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Public Customer Restaurant Profile Route */}
+      {/* Public Customer Restaurant Profile & Menu Routes */}
       <Route path="/r/:slug" element={<PublicRestaurantPage />} />
+      <Route path="/r/:slug/menu" element={<PublicRestaurantPage />} />
+
+      <Route
+        path="/menu"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <MenuPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Fallback to Home */}
       <Route path="*" element={<Navigate to="/" replace />} />

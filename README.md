@@ -65,7 +65,18 @@ dinepilot/
 - **Interactive CRM UI**:
   - **Customer Directory (`/dashboard/customers`)**: Debounced search (name, phone, email), classification filter tabs, VIP filter, responsive data table, pagination, Add Customer Modal, Merge Modal.
   - **Customer Profile (`/dashboard/customers/:id`)**: Header with VIP toggle, Quick Stats grid, Guest Intelligence card, Staff Notes editor, Tags manager, and Reservation History Timeline.
-  - **Live Dashboard Metrics**: Connects `totalCustomers`, `newCustomers`, `returningCustomers`, and `vipCustomers` to real PostgreSQL queries.
+  ### 📋 Day 6 — Menu Management & Digital Restaurant Catalog
+- **PostgreSQL & Prisma Menu Schema**: Models covering `Menu`, `MenuCategory`, and `MenuItem` linked to `Restaurant`. Monetary fields use `@db.Decimal(10, 2)` for exact currency calculations without floating-point errors.
+- **Category Delete Safety**: Prevents accidental deletion of categories containing dishes (`400 CATEGORY_HAS_ITEMS`), supporting safe item migration or forced cascading deletion.
+- **Operational Availability Decoupling**: Instant kitchen availability toggle (`isAvailable`) decoupled from administrative catalog visibility (`isActive`).
+- **Reordering Persist Engine**: Reorder categories and menu items with persistent zero-indexed `displayOrder` sequence.
+- **Sanitized Public Digital Menu API (`/api/menu/public/:slug`)**: Exposes public catalog data strictly filtered for active categories and available items, protecting internal tenant data and audit logs.
+- **Interactive Admin Menu Studio (`/dashboard/menu`)**:
+  - Real-time catalog metrics (Total Categories, Active Dishes, Available vs Unavailable, Vegetarian Count).
+  - Category manager modal & drag/reorder controls.
+  - Dish Management Modal with Zod validation, price input, prep time, and dietary tags (`Vegetarian`, `Vegan`, `Spicy`).
+  - Live Digital Menu Preview modal embedded directly in dashboard.
+- **Public Customer Digital Menu (`/r/:slug` & `/r/:slug/menu`)**: Responsive customer menu page with category navigation, dish search, and dietary preference filters.
 
 ---
 
@@ -80,7 +91,10 @@ erDiagram
     Restaurant ||--o{ Customer : "manages"
     Restaurant ||--o{ CustomerTag : "owns tags"
     Restaurant ||--o{ Reservation : "has bookings"
+    Restaurant ||--o{ Menu : "has primary menu"
     Restaurant ||--o{ AuditLog : "records"
+    Menu ||--o{ MenuCategory : "contains"
+    MenuCategory ||--o{ MenuItem : "contains"
     Customer ||--o{ Reservation : "places"
     Customer ||--o{ CustomerTagAssignment : "tagged with"
     CustomerTag ||--o{ CustomerTagAssignment : "assigned to"
@@ -119,12 +133,13 @@ Copy `.env.example` to `.env`:
 | `npx tsx apps/api/src/tests/run_day3_onboarding_tests.ts` | Run restaurant onboarding & slug collision tests |
 | `npx tsx apps/api/src/tests/run_day4_reservation_tests.ts` | Run reservation engine, concurrency locking & availability tests |
 | `npx tsx apps/api/src/tests/run_day5_customer_crm_tests.ts` | Run Day 5 Customer CRM, phone normalization, classification & merge tests |
+| `npx tsx apps/api/src/tests/run_day6_menu_tests.ts` | Run Day 6 Menu Management, Decimal precision, availability toggle & public API tests |
 
 ---
 
 ## 🔒 Security & Multi-Tenant Boundaries
 
 - **Tenant Isolation**: Every database operation verifies tenant authorization via `restaurantId`. Cross-tenant requests return `403 Forbidden` / `404 Not Found`.
-- **Role Enforcement**: Sensitive operations (`mergeCustomers`, `deleteTable`, `deleteCustomer`, `addTag`) require `OWNER` or `MANAGER` roles via `requireRestaurantRole`.
+- **Role Enforcement**: Sensitive operations (`mergeCustomers`, `deleteTable`, `deleteCustomer`, `addTag`, `deleteCategory`, `deleteMenuItem`) require `OWNER` or `MANAGER` roles via `requireRestaurantRole`.
 - **Privacy Protection**: Internal customer notes are kept strictly private on authenticated backend routes and are never exposed on public restaurant endpoints (`/r/:slug`).
 - **Data Veracity**: 100% of displayed operational and customer metrics come directly from real PostgreSQL queries with zero hardcoded or fake numbers.

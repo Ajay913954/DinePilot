@@ -87,6 +87,9 @@ model Restaurant {
   customerTags       CustomerTag[]
   reservations       Reservation[]
   auditLogs          AuditLog[]
+  menu               Menu?
+  menuCategories     MenuCategory[]
+  menuItems          MenuItem[]
 }
 
 model RestaurantUser {
@@ -236,4 +239,67 @@ model AuditLog {
 
   @@index([restaurantId])
   @@index([entityId])
+}
+
+model Menu {
+  id           String         @id @default(uuid())
+  restaurantId String         @unique
+  name         String         @default("Main Menu")
+  description  String?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categories   MenuCategory[]
+  items        MenuItem[]
+
+  @@index([restaurantId])
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  menuId       String
+  restaurantId String
+  name         String
+  description  String?
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  menu         Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items        MenuItem[]
+
+  @@unique([menuId, name])
+  @@index([restaurantId])
+  @@index([menuId, displayOrder])
+}
+
+model MenuItem {
+  id                     String       @id @default(uuid())
+  categoryId             String
+  menuId                 String
+  restaurantId           String
+  name                   String
+  description            String?
+  price                  Decimal      @db.Decimal(10, 2)
+  imageUrl               String?
+  isAvailable            Boolean      @default(true)
+  isActive               Boolean      @default(true)
+  isVegetarian           Boolean      @default(false)
+  isVegan                Boolean      @default(false)
+  isSpicy                Boolean      @default(false)
+  preparationTimeMinutes Int?
+  displayOrder           Int          @default(0)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  category               MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  menu                   Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  restaurant             Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@index([menuId])
+  @@index([categoryId])
+  @@index([categoryId, displayOrder])
+  @@index([restaurantId, isActive])
 }
