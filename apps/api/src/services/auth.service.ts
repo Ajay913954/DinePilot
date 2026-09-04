@@ -16,7 +16,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new AppError('An account with this email address already exists.', 409, 'DUPLICATE_EMAIL');
+      throw new AppError('An account with this email already exists.', 409, 'EMAIL_ALREADY_EXISTS');
     }
 
     const passwordHash = await hashPassword(input.password);
@@ -60,13 +60,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new AppError('Email or password is incorrect.', 401, 'INVALID_CREDENTIALS');
+      throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
     }
 
     const isPasswordValid = await comparePassword(input.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new AppError('Email or password is incorrect.', 401, 'INVALID_CREDENTIALS');
+      throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
     }
 
     const { token, expiresAt } = await this.createSession(user.id);

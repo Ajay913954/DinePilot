@@ -5,6 +5,8 @@ declare global {
     interface Request {
       user?: UserWithRole;
       sessionId?: string;
+      userRole?: string;
+      restaurantId?: string;
     }
   }
 }

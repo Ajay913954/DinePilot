@@ -8,6 +8,9 @@ import healthRoutes from './routes/health.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import restaurantRoutes from './routes/restaurant.routes.js';
 import onboardingRoutes from './routes/onboarding.routes.js';
+import tableRoutes from './routes/table.routes.js';
+import reservationRoutes from './routes/reservation.routes.js';
+import customerRoutes from './routes/customer.routes.js';
 
 const app = express();
 
@@ -34,6 +37,9 @@ app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/onboarding', onboardingRoutes);
+app.use('/api/tables', tableRoutes);
+app.use('/api/reservations', reservationRoutes);
+app.use('/api/customers', customerRoutes);
 
 // 404 Route Handler
 app.use('*', (_req, res) => {

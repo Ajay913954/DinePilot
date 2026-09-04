@@ -69,6 +69,43 @@ export class RestaurantService {
   }
 
   /**
+   * Fetch all restaurants associated with a user
+   */
+  static async getUserRestaurants(userId: string) {
+    const memberships = await prisma.restaurantUser.findMany({
+      where: { userId },
+      include: {
+        restaurant: true,
+      },
+    });
+
+    return memberships.map((m) => ({
+      ...m.restaurant,
+      role: m.role,
+    }));
+  }
+
+  /**
+   * Verify whether a user has permission to access a specific restaurant
+   */
+  static async requireRestaurantAccess(userId: string, restaurantId: string) {
+    const membership = await prisma.restaurantUser.findUnique({
+      where: {
+        userId_restaurantId: {
+          userId,
+          restaurantId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new AppError('Forbidden. You do not have access to this restaurant.', 403, 'FORBIDDEN');
+    }
+
+    return membership;
+  }
+
+  /**
    * Fetch authenticated user's active restaurant
    */
   static async getUserRestaurant(userId: string) {
@@ -117,5 +154,36 @@ export class RestaurantService {
     });
 
     return updated;
+  }
+
+  /**
+   * Fetch public restaurant details by slug (unauthenticated route)
+   */
+  static async getBySlug(slug: string) {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { slug: slug.toLowerCase().trim() },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logoUrl: true,
+        phone: true,
+        email: true,
+        address: true,
+        city: true,
+        state: true,
+        country: true,
+        timezone: true,
+        cuisineType: true,
+        openingTime: true,
+        closingTime: true,
+      },
+    });
+
+    if (!restaurant) {
+      throw new AppError('Restaurant not found.', 404, 'RESTAURANT_NOT_FOUND');
+    }
+
+    return restaurant;
   }
 }

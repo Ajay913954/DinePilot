@@ -29,9 +29,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, setMobileO
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, active: true },
-    { label: 'Reservations', path: '/reservations', icon: Calendar, active: false },
-    { label: 'Customers', path: '/customers', icon: Users, active: false },
-    { label: 'Tables', path: '/tables', icon: Grid3X3, active: false },
+    { label: 'Reservations', path: '/reservations', icon: Calendar, active: true },
+    { label: 'Customers', path: '/customers', icon: Users, active: true },
+    { label: 'Tables', path: '/tables', icon: Grid3X3, active: true },
     { label: 'Menu', path: '/menu', icon: UtensilsCrossed, active: false },
     { label: 'AI Assistant', path: '/ai-assistant', icon: Bot, active: false },
     { label: 'Marketing', path: '/marketing', icon: Megaphone, active: false },

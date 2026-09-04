@@ -47,4 +47,14 @@ export class RestaurantController {
       next(error);
     }
   }
+
+  static async getBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { slug } = req.params as { slug: string };
+      const restaurant = await RestaurantService.getBySlug(slug);
+      return sendSuccess(res, { restaurant });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

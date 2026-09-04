@@ -23,7 +23,8 @@ dinepilot/
 │   └── config/           # Shared TypeScript base configuration
 │
 ├── prisma/
-│   └── schema.prisma     # PostgreSQL Database Schema & Relationships
+│   ├── schema.prisma     # PostgreSQL Database Schema & Relationships
+│   └── seed.ts           # Development seed script
 │
 ├── docs/                 # Architectural specifications & API guides
 ├── docker-compose.yml    # PostgreSQL Database Service
@@ -34,95 +35,57 @@ dinepilot/
 
 ---
 
-## 🚀 Tech Stack
+## 🔒 Authentication & Session Architecture
 
-### Frontend (`apps/web`)
-* **Framework**: React 19, Vite, TypeScript
-* **Styling**: Tailwind CSS v4, Lucide React, Glassmorphism design system
-* **Routing**: React Router DOM
-* **State & Data Fetching**: TanStack Query (React Query)
-* **Form & Validation**: React Hook Form, Zod
+DinePilot uses a secure, production-ready session authentication strategy:
 
-### Backend (`apps/api`)
-* **Runtime**: Node.js, Express.js, TypeScript
-* **Authentication**: Secure HTTP-only Cookie Sessions, Bcrypt / Argon2 Hashing
-* **Validation**: Zod schema middleware
-* **Security**: Helmet, CORS, Rate Limiting, Cookie Parser
-
-### Database & Infra
-* **Database**: PostgreSQL 16
-* **ORM**: Prisma ORM v6
-* **Containerization**: Docker Compose
+- **Session Tokens**: 256-bit secure random tokens generated on authentication.
+- **Database Storage**: Raw session tokens are **never** stored in the database. Only a SHA-256 hash (`Session.tokenHash`) is saved.
+- **Cookie Protection**: Delivered via `HttpOnly`, `SameSite=Lax` (and `Secure` in production) cookies (`dinepilot_session`). Frontend JavaScript cannot read or extract the session token.
+- **Password Security**: Passwords are hashed using `bcrypt` (salt factor 10). Plaintext credentials are never saved, logged, or returned in API responses.
+- **Tenant Isolation**: User authorization is verified on every request using `RestaurantUser` relationships (`requireRestaurantAccess`). Users of Restaurant A cannot access Restaurant B data (403 Forbidden).
 
 ---
 
-## ⚙️ Prerequisites
+## 🔑 Environment Variables
 
-* **Node.js**: v20.x or higher (v24+ recommended)
-* **npm**: v10.x or higher
-* **Docker / PostgreSQL**: Docker Desktop (or local PostgreSQL server)
+Copy `.env.example` to `.env`:
 
----
-
-## 📦 Installation & Setup
-
-1. **Clone the repository and install dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Build internal workspace packages**:
-   ```bash
-   npm run build:types
-   npm run build:validation
-   ```
-
-3. **Configure Environment Variables**:
-   Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-4. **Start PostgreSQL Database**:
-   ```bash
-   docker-compose up -d
-   ```
-
-5. **Run Prisma Migrations & Generate Client**:
-   ```bash
-   npm run prisma:generate
-   npm run prisma:migrate
-   ```
+| Environment Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (`postgresql://[USER]:[PASSWORD]@[HOST]:[PORT]/[DB]?schema=public`) |
+| `SESSION_SECRET` | Secret key for session encryption & cookie signing |
+| `NODE_ENV` | Application environment (`development`, `production`, `test`) |
+| `PORT` | Backend Express server port (Default: `5000`) |
+| `APP_URL` | Frontend Web application URL for CORS configuration (Default: `http://localhost:5173`) |
+| `API_URL` | Backend API base URL (Default: `http://localhost:5000`) |
 
 ---
 
-## 💻 Development Commands
+## 💻 Development & Testing Commands
 
 | Command | Action |
 |---|---|
 | `npm run dev` | Start both Frontend (`http://localhost:5173`) and Backend API (`http://localhost:5000`) concurrently |
 | `npm run dev:web` | Start Frontend Web App only |
 | `npm run dev:api` | Start Backend Express API only |
-| `npm run build` | Build all packages and applications |
-| `npm run prisma:studio` | Open Prisma Studio GUI for database inspection |
+| `npm run build` | Compile and build all workspace packages and apps |
+| `npm run prisma:generate` | Generate Prisma Client |
+| `npm run prisma:migrate` | Run Prisma database migrations (`prisma migrate dev`) |
+| `npm run prisma:seed` | Run development database seed script |
+| `npm run prisma:studio` | Open Prisma Studio GUI for database visual inspection |
+| `npx tsx apps/api/src/tests/run_auth_tests.ts` | Run authentication engine verification tests |
+| `npx tsx apps/api/src/tests/run_password_tests.ts` | Run password hashing & security verification tests |
+| `npx tsx apps/api/src/tests/run_security_tenant_tests.ts` | Run multi-tenant boundary isolation & token security tests |
 
 ---
 
-## 🛡️ Security Best Practices
+## 🗺️ Roadmap & Checkpoints
 
-* **HTTP-only Cookies**: Authentication tokens are stored in secure, HTTP-only, SameSite cookies.
-* **Tenant Isolation**: Backend middleware enforces access control based on user-restaurant relationships.
-* **Input Validation**: Strict Zod validation on all incoming requests.
-* **SQL Injection Protection**: Parameterized queries via Prisma ORM.
-
----
-
-## 🗺️ Day 1 Roadmap & Checkpoints
-
-- [x] **CHECKPOINT 1**: Architecture, Monorepo Workspace, TypeScript, Tailwind CSS, React Router, Express skeleton, Landing Page.
-- [ ] **CHECKPOINT 2**: PostgreSQL Database setup, Prisma Schema definition & Migration.
-- [ ] **CHECKPOINT 3**: Secure Authentication Engine (Signup, Login, Logout, Session Cookie, Middleware).
-- [ ] **CHECKPOINT 4**: Multi-step Restaurant Onboarding & OWNER role assignment.
-- [ ] **CHECKPOINT 5**: Protected Dashboard & Settings module.
-- [ ] **CHECKPOINT 6**: Responsive polish, Drawer navigation, Loading & Toast system.
-- [ ] **CHECKPOINT 7**: Automated authentication & multi-tenant isolation unit/integration tests.
+- [x] **DAY 1**: Monorepo Workspace, TypeScript, Tailwind CSS, React Router v7, Express skeleton, Landing Page.
+- [x] **DAY 2 — CHECKPOINT 1**: PostgreSQL Database setup, Prisma Schema definition (`User`, `Session`, `Restaurant`, `RestaurantUser`, `Role`) & Migration (`20260904134248_day2_auth_schema`).
+- [x] **DAY 2 — CHECKPOINT 2**: Reusable password hashing (`hashPassword`) & verification (`verifyPassword`).
+- [x] **DAY 2 — CHECKPOINT 3**: Registration API (`POST /api/auth/register`), email normalization, duplicate email detection (`EMAIL_ALREADY_EXISTS` 409).
+- [x] **DAY 2 — CHECKPOINT 4**: Login (`POST /api/auth/login`), Logout (`POST /api/auth/logout`), Current User (`GET /api/auth/me`), `requireAuth` middleware, HttpOnly cookies, and rate limiting (`authLimiter`).
+- [x] **DAY 2 — CHECKPOINT 5**: Frontend Auth integration (`AuthContext`), Login UI, Signup UI, `ProtectedRoute` & `PublicRoute` guards.
+- [x] **DAY 2 — CHECKPOINT 6**: Security verification (SHA256 session token hashing, password hash isolation) and multi-tenant isolation tests.

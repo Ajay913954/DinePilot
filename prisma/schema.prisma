@@ -14,6 +14,41 @@ enum Role {
   STAFF
 }
 
+enum TableStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  CLEANING
+  DISABLED
+}
+
+enum TableLocation {
+  INDOOR
+  OUTDOOR
+  PRIVATE
+  BAR
+  OTHER
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationSource {
+  DASHBOARD
+  WEBSITE
+  WHATSAPP
+  AI
+  QR
+  PHONE
+  OTHER
+}
+
 model User {
   id            String           @id @default(uuid())
   firstName     String
@@ -47,6 +82,11 @@ model Restaurant {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   users              RestaurantUser[]
+  tables             Table[]
+  customers          Customer[]
+  customerTags       CustomerTag[]
+  reservations       Reservation[]
+  auditLogs          AuditLog[]
 }
 
 model RestaurantUser {
@@ -70,8 +110,130 @@ model Session {
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model Table {
+  id           String        @id @default(uuid())
+  restaurantId String
+  tableNumber  String
+  name         String?
+  capacity     Int
+  location     TableLocation @default(INDOOR)
+  status       TableStatus   @default(AVAILABLE)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  @@unique([restaurantId, tableNumber])
+  @@index([restaurantId])
+  @@index([restaurantId, tableNumber])
+  @@index([status])
+  @@index([isActive])
+}
+
+model Customer {
+  id                String                  @id @default(uuid())
+  restaurantId      String
+  name              String
+  phone             String
+  email             String?
+  dateOfBirth       DateTime?
+  notes             String?
+  isVip             Boolean                 @default(false)
+  preferredSeating  String?
+  dietaryPreference String?
+  specialOccasion   String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  restaurant        Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservations      Reservation[]
+  tags              CustomerTagAssignment[]
+
+  @@unique([restaurantId, phone])
+  @@index([restaurantId])
+  @@index([phone])
+  @@index([restaurantId, name])
+  @@index([restaurantId, email])
+  @@index([isVip])
+}
+
+model CustomerTag {
+  id           String                  @id @default(uuid())
+  restaurantId String
+  name         String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  restaurant   Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  assignments  CustomerTagAssignment[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
+}
+
+model CustomerTagAssignment {
+  id         String      @id @default(uuid())
+  customerId String
+  tagId      String
+  createdAt  DateTime    @default(now())
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tag        CustomerTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, tagId])
+  @@index([customerId])
+  @@index([tagId])
+}
+
+model Reservation {
+  id              String            @id @default(uuid())
+  restaurantId    String
+  tableId         String?
+  customerId      String?
+  reservationDate DateTime
+  startTime       String
+  endTime         String
+  durationMinutes Int               @default(90)
+  guestCount      Int
+  status          ReservationStatus @default(PENDING)
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  specialRequest  String?
+  source          ReservationSource @default(DASHBOARD)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  restaurant      Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table           Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customer        Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId])
+  @@index([reservationDate])
+  @@index([status])
+  @@index([tableId])
+  @@index([customerId])
+  @@index([restaurantId, reservationDate])
+  @@index([restaurantId, tableId])
+}
+
+model AuditLog {
+  id           String     @id @default(uuid())
+  restaurantId String
+  userId       String?
+  action       String
+  entity       String
+  entityId     String?
+  details      String?
+  createdAt    DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@index([entityId])
 }

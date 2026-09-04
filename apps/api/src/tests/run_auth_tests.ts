@@ -37,7 +37,7 @@ async function runAuthTests() {
       });
       throw new Error('FAIL: Duplicate email registration should have thrown a 409 error!');
     } catch (err: any) {
-      if (err.code === 'DUPLICATE_EMAIL' || err.statusCode === 409) {
+      if (err.code === 'EMAIL_ALREADY_EXISTS' || err.code === 'DUPLICATE_EMAIL' || err.statusCode === 409) {
         console.log('✅ PASS: Duplicate email correctly blocked (409 Conflict)');
       } else {
         throw err;

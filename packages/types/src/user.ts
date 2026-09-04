@@ -17,4 +17,5 @@ export interface User {
 export interface UserWithRole extends User {
   role: UserRole;
   restaurantId?: string;
+  restaurant?: any;
 }

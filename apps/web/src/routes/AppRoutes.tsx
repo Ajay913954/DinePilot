@@ -1,14 +1,21 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { LandingPage } from '../pages/LandingPage';
 import { LoginPage } from '../pages/LoginPage';
 import { SignupPage } from '../pages/SignupPage';
 import { OnboardingPage } from '../pages/OnboardingPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { TablesPage } from '../pages/TablesPage';
+import { ReservationsPage } from '../pages/ReservationsPage';
+import { CustomersPage } from '../pages/CustomersPage';
+import { CustomerProfilePage } from '../pages/CustomerProfilePage';
+import { PublicRestaurantPage } from '../pages/PublicRestaurantPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../context/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen flex flex-col bg-slate-950">
@@ -17,6 +24,43 @@ const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     <Footer />
   </div>
 );
+
+export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+export const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to={user.restaurantId || user.restaurant ? '/dashboard' : '/onboarding'} replace />;
+  }
+
+  return <>{children}</>;
+};
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -31,30 +75,98 @@ export const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Auth Routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      {/* Auth Routes (Guest Only) */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
+          </PublicRoute>
+        }
+      />
 
       {/* Protected Onboarding Flow */}
-      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protected App Routes */}
       <Route
         path="/dashboard"
         element={
-          <DashboardLayout>
-            <DashboardPage />
-          </DashboardLayout>
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tables"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TablesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reservations"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ReservationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customers"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CustomersPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customers/:customerId"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CustomerProfilePage />
+            </DashboardLayout>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/settings"
         element={
-          <DashboardLayout>
-            <SettingsPage />
-          </DashboardLayout>
+          <ProtectedRoute>
+            <DashboardLayout>
+              <SettingsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
         }
       />
+
+      {/* Public Customer Restaurant Profile Route */}
+      <Route path="/r/:slug" element={<PublicRestaurantPage />} />
 
       {/* Fallback to Home */}
       <Route path="*" element={<Navigate to="/" replace />} />

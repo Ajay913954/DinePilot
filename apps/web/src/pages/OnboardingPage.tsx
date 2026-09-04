@@ -32,8 +32,8 @@ export const OnboardingPage: React.FC = () => {
     closingTime: '22:00',
     tableCount: 10,
     avgSeatingCapacity: 40,
-    country: 'United States',
-    timezone: 'UTC',
+    country: 'India',
+    timezone: 'Asia/Kolkata',
   });
 
   // Step 1 Form
@@ -54,8 +54,8 @@ export const OnboardingPage: React.FC = () => {
       address: formData.address || '',
       city: formData.city || '',
       state: formData.state || '',
-      country: formData.country || 'United States',
-      timezone: formData.timezone || 'UTC',
+      country: formData.country || 'India',
+      timezone: formData.timezone || 'Asia/Kolkata',
     },
   });
 
@@ -110,10 +110,10 @@ export const OnboardingPage: React.FC = () => {
             <span>Step {currentStep} of 4</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-            Welcome to DinePilot
+            DinePilot
           </h1>
           <p className="text-slate-400 text-sm">
-            Let's get your restaurant ready.
+            Set up your restaurant account and operational environment.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export const OnboardingPage: React.FC = () => {
             { step: 1, label: 'Info' },
             { step: 2, label: 'Location' },
             { step: 3, label: 'Settings' },
-            { step: 4, label: 'Ready' }
+            { step: 4, label: 'Complete' }
           ].map((item) => (
             <div key={item.step} className="flex flex-col items-center gap-1.5">
               <div
@@ -147,15 +147,15 @@ export const OnboardingPage: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-amber-400" />
-                  Restaurant Information
+                  Tell us about your restaurant
                 </h3>
-                <p className="text-xs text-slate-400">Tell us basic details about your dining establishment.</p>
+                <p className="text-xs text-slate-400">Basic details about your dining establishment.</p>
               </div>
 
               <div className="space-y-4">
                 <Input
                   label="Restaurant name"
-                  placeholder="e.g. La Trattoria Bistro"
+                  placeholder="e.g. The Spice House"
                   leftIcon={<Building2 className="w-4 h-4 text-slate-500" />}
                   error={step1Form.formState.errors.name?.message}
                   {...step1Form.register('name')}
@@ -163,7 +163,7 @@ export const OnboardingPage: React.FC = () => {
 
                 <Input
                   label="Cuisine type"
-                  placeholder="e.g. Italian, Modern Bistro, Seafood, Steakhouse"
+                  placeholder="e.g. North Indian, Italian, Bistro"
                   leftIcon={<Utensils className="w-4 h-4 text-slate-500" />}
                   error={step1Form.formState.errors.cuisineType?.message}
                   {...step1Form.register('cuisineType')}
@@ -172,7 +172,7 @@ export const OnboardingPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Phone number"
-                    placeholder="+1 (555) 000-1234"
+                    placeholder="+91 98765 43210"
                     leftIcon={<Phone className="w-4 h-4 text-slate-500" />}
                     error={step1Form.formState.errors.phone?.message}
                     {...step1Form.register('phone')}
@@ -180,7 +180,7 @@ export const OnboardingPage: React.FC = () => {
                   <Input
                     label="Restaurant email"
                     type="email"
-                    placeholder="contact@latrattoria.com"
+                    placeholder="contact@spicehouse.com"
                     leftIcon={<Mail className="w-4 h-4 text-slate-500" />}
                     error={step1Form.formState.errors.email?.message}
                     {...step1Form.register('email')}
@@ -202,15 +202,15 @@ export const OnboardingPage: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-amber-400" />
-                  Location & Timezone
+                  Where is your restaurant located?
                 </h3>
-                <p className="text-xs text-slate-400">Where is your dining venue located?</p>
+                <p className="text-xs text-slate-400">Physical address and operating timezone.</p>
               </div>
 
               <div className="space-y-4">
                 <Input
                   label="Address"
-                  placeholder="123 Culinary Boulevard"
+                  placeholder="123 Commercial Street"
                   leftIcon={<MapPin className="w-4 h-4 text-slate-500" />}
                   error={step2Form.formState.errors.address?.message}
                   {...step2Form.register('address')}
@@ -219,13 +219,13 @@ export const OnboardingPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="City"
-                    placeholder="New York"
+                    placeholder="Bengaluru"
                     error={step2Form.formState.errors.city?.message}
                     {...step2Form.register('city')}
                   />
                   <Input
-                    label="State / Province"
-                    placeholder="NY"
+                    label="State"
+                    placeholder="Karnataka"
                     error={step2Form.formState.errors.state?.message}
                     {...step2Form.register('state')}
                   />
@@ -234,14 +234,14 @@ export const OnboardingPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Country"
-                    placeholder="United States"
+                    placeholder="India"
                     leftIcon={<Globe className="w-4 h-4 text-slate-500" />}
                     error={step2Form.formState.errors.country?.message}
                     {...step2Form.register('country')}
                   />
                   <Input
                     label="Timezone"
-                    placeholder="America/New_York or UTC"
+                    placeholder="Asia/Kolkata"
                     leftIcon={<Clock className="w-4 h-4 text-slate-500" />}
                     error={step2Form.formState.errors.timezone?.message}
                     {...step2Form.register('timezone')}
@@ -266,9 +266,9 @@ export const OnboardingPage: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <Clock className="w-5 h-5 text-amber-400" />
-                  Capacity & Operating Hours
+                  Tell us about your operations
                 </h3>
-                <p className="text-xs text-slate-400">Configure your initial table capacity and daily operating hours.</p>
+                <p className="text-xs text-slate-400">Configure operating hours, table count, and seating capacity.</p>
               </div>
 
               <div className="space-y-4">
@@ -315,9 +315,10 @@ export const OnboardingPage: React.FC = () => {
                   type="submit"
                   variant="primary"
                   isLoading={isSubmitting}
+                  disabled={isSubmitting}
                   rightIcon={<CheckCircle2 className="w-4 h-4 text-slate-950" />}
                 >
-                  {isSubmitting ? 'Creating restaurant...' : 'Complete Onboarding'}
+                  {isSubmitting ? 'Creating your restaurant...' : 'Complete Onboarding'}
                 </Button>
               </div>
             </form>
@@ -332,10 +333,16 @@ export const OnboardingPage: React.FC = () => {
 
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-white">
-                  Your restaurant is ready!
+                  🎉 Your restaurant is ready!
                 </h3>
-                <p className="text-slate-400 text-sm max-w-md mx-auto">
-                  Congratulations! Your restaurant account has been configured with complete owner privileges.
+                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-sm space-y-1 max-w-sm mx-auto text-left">
+                  <p className="text-slate-400 text-xs">Restaurant name:</p>
+                  <p className="text-amber-400 font-bold text-base">{formData.name}</p>
+                  <p className="text-slate-400 text-xs mt-2">Location:</p>
+                  <p className="text-white font-medium text-xs">{formData.city}, {formData.state}</p>
+                </div>
+                <p className="text-slate-300 text-sm max-w-md mx-auto pt-2">
+                  DinePilot is ready to help you manage your restaurant.
                 </p>
               </div>
 

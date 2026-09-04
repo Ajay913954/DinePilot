@@ -12,6 +12,8 @@ export const comparePassword = async (password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 };
 
+export const verifyPassword = comparePassword;
+
 export const generateToken = (): string => {
   return crypto.randomBytes(32).toString('hex');
 };
