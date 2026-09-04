@@ -128,6 +128,7 @@ Copy `.env.example` to `.env`:
 | `npm run prisma:migrate` | Run Prisma database migrations (`prisma migrate dev`) |
 | `npm run prisma:seed` | Run development database seed script |
 | `npm run prisma:studio` | Open Prisma Studio GUI for database visual inspection |
+| `npx tsx apps/api/src/tests/run_all_tests.ts` | **Run Master Test Suite** (Executes all 7 test suites: Auth, Tenant Boundaries, Onboarding, Reservations, Customer CRM, Menu Management, & Security) |
 | `npx tsx apps/api/src/tests/run_auth_tests.ts` | Run authentication engine verification tests |
 | `npx tsx apps/api/src/tests/run_security_tenant_tests.ts` | Run multi-tenant boundary isolation & token security tests |
 | `npx tsx apps/api/src/tests/run_day3_onboarding_tests.ts` | Run restaurant onboarding & slug collision tests |
