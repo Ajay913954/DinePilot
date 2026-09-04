@@ -56,7 +56,7 @@ router.patch(
   MenuController.toggleItemAvailability
 );
 router.delete(
-  '/:id',
+  '/items/:id',
   requireRestaurantRole([Role.OWNER, Role.MANAGER]),
   MenuController.deleteMenuItem
 );

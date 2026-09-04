@@ -134,6 +134,7 @@ Copy `.env.example` to `.env`:
 | `npx tsx apps/api/src/tests/run_day4_reservation_tests.ts` | Run reservation engine, concurrency locking & availability tests |
 | `npx tsx apps/api/src/tests/run_day5_customer_crm_tests.ts` | Run Day 5 Customer CRM, phone normalization, classification & merge tests |
 | `npx tsx apps/api/src/tests/run_day6_menu_tests.ts` | Run Day 6 Menu Management, Decimal precision, availability toggle & public API tests |
+| `npx tsx apps/api/src/tests/run_day6_security_menu_tests.ts` | Run Day 6 Menu Security tests (STAFF isolation, cross-tenant relationship integrity & force-delete policy) |
 
 ---
 

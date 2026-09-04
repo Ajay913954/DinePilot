@@ -1,7 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { RestaurantService } from './restaurant.service.js';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import {
   CreateMenuCategoryInput,
   UpdateMenuCategoryInput,
@@ -80,6 +80,10 @@ export class MenuService {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
     }
 
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to create menu categories.', 403, 'FORBIDDEN');
+    }
+
     const menu = await this.getOrCreateRestaurantMenu(restaurant.id);
 
     // Check duplicate category name
@@ -143,6 +147,10 @@ export class MenuService {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
     }
 
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to update menu categories.', 403, 'FORBIDDEN');
+    }
+
     const existing = await prisma.menuCategory.findFirst({
       where: { id: categoryId, restaurantId: restaurant.id },
     });
@@ -187,6 +195,18 @@ export class MenuService {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
     }
 
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to delete menu categories.', 403, 'FORBIDDEN');
+    }
+
+    if (force && restaurant.role !== Role.OWNER) {
+      throw new AppError(
+        'Forbidden. Force-deleting a menu category containing dishes is restricted to Restaurant OWNER only.',
+        403,
+        'FORCE_DELETE_RESTRICTED'
+      );
+    }
+
     const category = await prisma.menuCategory.findFirst({
       where: { id: categoryId, restaurantId: restaurant.id },
       include: { _count: { select: { items: true } } },
@@ -212,10 +232,12 @@ export class MenuService {
       data: {
         restaurantId: restaurant.id,
         userId,
-        action: 'MENU_CATEGORY_DELETED',
+        action: force ? 'CRITICAL_CATEGORY_FORCE_DELETED' : 'MENU_CATEGORY_DELETED',
         entity: 'MenuCategory',
         entityId: categoryId,
-        details: `Deleted menu category '${category.name}'`,
+        details: force
+          ? `CRITICAL: Force-deleted menu category '${category.name}' along with ${category._count.items} contained menu items`
+          : `Deleted menu category '${category.name}'`,
       },
     });
 
@@ -229,6 +251,10 @@ export class MenuService {
     const restaurant = await RestaurantService.getUserRestaurant(userId);
     if (!restaurant) {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
+    }
+
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to reorder menu categories.', 403, 'FORBIDDEN');
     }
 
     const existingCategories = await prisma.menuCategory.findMany({
@@ -374,6 +400,10 @@ export class MenuService {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
     }
 
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to create menu items.', 403, 'FORBIDDEN');
+    }
+
     // Verify category ownership
     const category = await prisma.menuCategory.findFirst({
       where: { id: input.categoryId, restaurantId: restaurant.id },
@@ -457,6 +487,10 @@ export class MenuService {
     const restaurant = await RestaurantService.getUserRestaurant(userId);
     if (!restaurant) {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
+    }
+
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to update menu items.', 403, 'FORBIDDEN');
     }
 
     const existing = await prisma.menuItem.findFirst({
@@ -557,6 +591,10 @@ export class MenuService {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
     }
 
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to delete menu items.', 403, 'FORBIDDEN');
+    }
+
     const existing = await prisma.menuItem.findFirst({
       where: { id: itemId, restaurantId: restaurant.id },
     });
@@ -590,6 +628,10 @@ export class MenuService {
     const restaurant = await RestaurantService.getUserRestaurant(userId);
     if (!restaurant) {
       throw new AppError('No restaurant associated with this user account.', 404, 'RESTAURANT_NOT_FOUND');
+    }
+
+    if (restaurant.role === Role.STAFF) {
+      throw new AppError('Forbidden. STAFF members do not have permission to reorder menu items.', 403, 'FORBIDDEN');
     }
 
     const category = await prisma.menuCategory.findFirst({

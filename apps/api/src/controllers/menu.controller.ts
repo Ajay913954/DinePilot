@@ -67,6 +67,15 @@ export class MenuController {
 
       const { id } = req.params as { id: string };
       const force = req.query.force === 'true';
+
+      if (force && req.userRole !== 'OWNER') {
+        throw new AppError(
+          'Forbidden. Force-deleting a menu category containing dishes is restricted to Restaurant OWNER only.',
+          403,
+          'FORCE_DELETE_RESTRICTED'
+        );
+      }
+
       const category = await MenuService.deleteCategory(req.user.id, id, force);
 
       return sendSuccess(res, { category }, 'Category deleted successfully');
