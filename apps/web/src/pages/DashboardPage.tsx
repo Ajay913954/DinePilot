@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { restaurantApi, reservationApi, tableApi, customerApi } from '../services/api';
+import { restaurantApi, reservationApi, tableApi, customerApi, orderApi } from '../services/api';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Calendar, Users, Grid3X3, Star, Sparkles, Settings, ExternalLink, PlusCircle, Clock, CheckCircle2, UserCheck, UserPlus } from 'lucide-react';
+import { Calendar, Users, Grid3X3, Star, Sparkles, Settings, ExternalLink, PlusCircle, Clock, CheckCircle2, UserCheck, UserPlus, ShoppingBag, DollarSign } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -14,23 +14,26 @@ export const DashboardPage: React.FC = () => {
   const [todayReservations, setTodayReservations] = useState<any[]>([]);
   const [tables, setTables] = useState<any[]>([]);
   const [customerStats, setCustomerStats] = useState<any>(null);
+  const [orderStats, setOrderStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const [restRes, resvRes, tblRes, custRes] = await Promise.all([
+        const [restRes, resvRes, tblRes, custRes, ordRes] = await Promise.all([
           restaurantApi.getMe(),
           reservationApi.getReservations({ date: todayStr }),
           tableApi.getTables(),
           customerApi.getCustomerStats().catch(() => ({ stats: { totalCustomers: 0, newCustomers: 0, returningCustomers: 0, vipCustomers: 0 } })),
+          orderApi.getOrderStats().catch(() => null),
         ]);
 
         setRestaurant(restRes.restaurant);
         setTodayReservations(resvRes.reservations || []);
         setTables(tblRes.tables || []);
         setCustomerStats(custRes.stats || null);
+        setOrderStats(ordRes || null);
       } catch (err) {
         console.error('Dashboard data load error:', err);
       } finally {
@@ -95,7 +98,7 @@ export const DashboardPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           
           {/* Card 1: Today's Reservations */}
           <Card glass className="p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all duration-300">
@@ -109,7 +112,23 @@ export const DashboardPage: React.FC = () => {
             </p>
           </Card>
 
-          {/* Card 2: Expected Guests */}
+          {/* Card 2: Today's Gross Order Value */}
+          <Link to="/orders">
+            <Card glass className="p-6 relative overflow-hidden group border-indigo-500/30 hover:border-indigo-500/50 transition-all duration-300 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-400">Today's Order Value</span>
+                <DollarSign className="w-5 h-5 text-emerald-400" />
+              </div>
+              <p className="text-3xl font-extrabold text-emerald-400">
+                ₹{(orderStats?.todayOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-2">
+                {orderStats?.todayOrdersCount || 0} orders today • {orderStats?.activeOrdersCount || 0} active
+              </p>
+            </Card>
+          </Link>
+
+          {/* Card 3: Expected Guests */}
           <Card glass className="p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-slate-400">Expected Guests</span>
@@ -121,7 +140,7 @@ export const DashboardPage: React.FC = () => {
             </p>
           </Card>
 
-          {/* Card 3: Seating & Table Availability */}
+          {/* Card 4: Seating & Table Availability */}
           <Card glass className="p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-slate-400">Available Tables</span>
@@ -135,7 +154,7 @@ export const DashboardPage: React.FC = () => {
             </p>
           </Card>
 
-          {/* Card 4: Real Customer CRM Metrics */}
+          {/* Card 5: Real Customer CRM Metrics */}
           <Link to="/customers">
             <Card glass className="p-6 relative overflow-hidden group border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 cursor-pointer">
               <div className="flex items-center justify-between mb-2">

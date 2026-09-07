@@ -12,6 +12,7 @@ import { CustomersPage } from '../pages/CustomersPage';
 import { CustomerProfilePage } from '../pages/CustomerProfilePage';
 import { PublicRestaurantPage } from '../pages/PublicRestaurantPage';
 import { MenuPage } from '../pages/MenuPage';
+import { OrdersPage } from '../pages/OrdersPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -21,7 +22,7 @@ import { Loader2 } from 'lucide-react';
 const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen flex flex-col bg-slate-950">
     <Navbar />
-    <main className="flex-grow">{children}</main>
+    <main className="grow">{children}</main>
     <Footer />
   </div>
 );
@@ -176,6 +177,27 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <MenuPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/orders"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <OrdersPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/orders"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <OrdersPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

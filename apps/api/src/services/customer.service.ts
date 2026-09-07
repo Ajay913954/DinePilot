@@ -38,9 +38,9 @@ export class CustomerService {
   }
 
   /**
-   * Helper to compute full stats for a customer
+   * Helper to compute full stats for a customer (including reservations & orders)
    */
-  static calculateCustomerStats(reservations: any[]): CustomerStats {
+  static calculateCustomerStats(reservations: any[] = [], orders: any[] = []): CustomerStats {
     const totalReservations = reservations.length;
     const completedReservations = reservations.filter((r) => r.status === ReservationStatus.COMPLETED);
     const completedVisits = completedReservations.length;
@@ -76,6 +76,13 @@ export class CustomerService {
     const totalGuests = partySource.reduce((sum, r) => sum + r.guestCount, 0);
     const avgPartySize = partySource.length > 0 ? Math.round((totalGuests / partySource.length) * 10) / 10 : 0;
 
+    // Order Spend Statistics (Completed Orders Only)
+    const completedOrdersList = orders.filter((o) => o.status === 'COMPLETED');
+    const completedOrders = completedOrdersList.length;
+    const totalOrderValueRaw = completedOrdersList.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+    const totalOrderValue = Math.round(totalOrderValueRaw * 100) / 100;
+    const avgOrderValue = completedOrders > 0 ? Math.round((totalOrderValue / completedOrders) * 100) / 100 : 0;
+
     return {
       totalReservations,
       completedVisits,
@@ -85,6 +92,9 @@ export class CustomerService {
       lastVisit,
       nextVisit,
       avgPartySize,
+      completedOrders,
+      totalOrderValue,
+      avgOrderValue,
     };
   }
 
@@ -233,6 +243,13 @@ export class CustomerService {
           },
           orderBy: [{ reservationDate: 'desc' }, { startTime: 'desc' }],
         },
+        orders: {
+          select: {
+            id: true,
+            status: true,
+            totalAmount: true,
+          },
+        },
       },
     });
 
@@ -240,7 +257,7 @@ export class CustomerService {
       throw new AppError('Customer not found.', 404, 'CUSTOMER_NOT_FOUND');
     }
 
-    const stats = this.calculateCustomerStats(customer.reservations);
+    const stats = this.calculateCustomerStats(customer.reservations, customer.orders);
     const lastVisitDate = stats.lastVisit ? new Date(stats.lastVisit) : null;
     const classification = this.calculateClassification(customer.isVip, stats.completedVisits, lastVisitDate);
 

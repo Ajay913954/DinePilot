@@ -101,7 +101,7 @@ async function runDay6SecurityMenuTests() {
 
     // 1. STAFF Destructive Permissions Check
     console.log('\n[Test 1]: Verifying STAFF Destructive Operations Isolation...');
-    
+
     // Create baseline Category in Restaurant A by OWNER
     const catA = await MenuService.createCategory(ownerA.user.id, {
       name: 'Starters A',
@@ -193,7 +193,7 @@ async function runDay6SecurityMenuTests() {
 
     // 3. Make Force-Delete Extremely Restricted
     console.log('\n[Test 3]: Verifying Extremely Restricted Force-Delete Policy...');
-    
+
     // Attempt normal delete on Category A containing items
     try {
       await MenuService.deleteCategory(ownerA.user.id, catA.id, false);

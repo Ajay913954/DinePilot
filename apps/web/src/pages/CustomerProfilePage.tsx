@@ -164,7 +164,7 @@ export const CustomerProfilePage: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-2xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-2xl shadow-inner">
               {customer.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -253,6 +253,18 @@ export const CustomerProfilePage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Classification:</span>
                 <span className="font-semibold text-emerald-400">{customer.classification}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Completed Orders:</span>
+                <span className="font-semibold text-indigo-400">{customer.stats.completedOrders || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Total Order Value:</span>
+                <span className="font-semibold text-emerald-400">₹{(customer.stats.totalOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Avg Order Value:</span>
+                <span className="font-semibold text-emerald-400">₹{(customer.stats.avgOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Avg Party Size:</span>

@@ -8,6 +8,7 @@ const testScripts = [
   { name: 'Day 5: Customer CRM, Intelligence & Merge Engine', script: 'apps/api/src/tests/run_day5_customer_crm_tests.ts' },
   { name: 'Day 6: Menu Management & Digital Restaurant Catalog', script: 'apps/api/src/tests/run_day6_menu_tests.ts' },
   { name: 'Day 6: Menu Security & STAFF/Force-Delete Isolation', script: 'apps/api/src/tests/run_day6_security_menu_tests.ts' },
+  { name: 'Day 7: Orders, Order Items & Restaurant Order Management', script: 'apps/api/src/tests/run_day7_order_tests.ts' },
 ];
 
 async function runAllTests() {

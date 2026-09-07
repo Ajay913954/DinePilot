@@ -19,6 +19,7 @@ export const createReservationSchema = z.object({
   guestCount: z.coerce.number().min(1, 'Guest count must be at least 1').max(50),
   durationMinutes: z.coerce.number().min(15).max(360).optional().default(90),
   tableId: z.string().optional(),
+  customerId: z.string().optional(),
   specialRequest: z.string().max(500).optional(),
   source: z.enum(['DASHBOARD', 'WEBSITE', 'WHATSAPP', 'AI', 'QR', 'PHONE', 'OTHER']).optional().default('DASHBOARD'),
   notes: z.string().max(500).optional(),

@@ -6,6 +6,7 @@ import {
   Users, 
   Grid3X3, 
   UtensilsCrossed, 
+  ShoppingBag,
   Bot, 
   Megaphone, 
   Star, 
@@ -29,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, setMobileO
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, active: true },
+    { label: 'Orders', path: '/orders', icon: ShoppingBag, active: true },
     { label: 'Reservations', path: '/reservations', icon: Calendar, active: true },
     { label: 'Customers', path: '/customers', icon: Users, active: true },
     { label: 'Tables', path: '/tables', icon: Grid3X3, active: true },

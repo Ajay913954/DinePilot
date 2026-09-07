@@ -338,3 +338,82 @@ export const menuApi = {
       method: 'GET',
     }),
 };
+
+export const orderApi = {
+  getOrders: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    tableId?: string;
+    customerId?: string;
+    source?: string;
+    date?: string;
+  } = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.search) query.append('search', params.search);
+    if (params.status) query.append('status', params.status);
+    if (params.tableId) query.append('tableId', params.tableId);
+    if (params.customerId) query.append('customerId', params.customerId);
+    if (params.source) query.append('source', params.source);
+    if (params.date) query.append('date', params.date);
+
+    return fetchApi<{ data: any[]; pagination: any }>(`/orders?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  getOrderById: (id: string) =>
+    fetchApi<any>(`/orders/${id}`, {
+      method: 'GET',
+    }),
+
+  getOrderStats: () =>
+    fetchApi<any>('/orders/stats', {
+      method: 'GET',
+    }),
+
+  createOrder: (input: any) =>
+    fetchApi<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updateOrder: (id: string, input: any) =>
+    fetchApi<any>(`/orders/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+
+  updateOrderStatus: (id: string, status: string) =>
+    fetchApi<any>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  addOrderItem: (id: string, input: any) =>
+    fetchApi<any>(`/orders/${id}/items`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updateOrderItem: (id: string, itemId: string, input: any) =>
+    fetchApi<any>(`/orders/${id}/items/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+
+  removeOrderItem: (id: string, itemId: string) =>
+    fetchApi<any>(`/orders/${id}/items/${itemId}`, {
+      method: 'DELETE',
+    }),
+
+  cancelOrder: (id: string, reason?: string) =>
+    fetchApi<any>(`/orders/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+};
+

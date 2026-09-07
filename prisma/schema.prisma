@@ -49,6 +49,27 @@ enum ReservationSource {
   OTHER
 }
 
+enum OrderStatus {
+  DRAFT
+  PLACED
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderSource {
+  DASHBOARD
+  WEBSITE
+  QR
+  WHATSAPP
+  AI
+  PHONE
+  OTHER
+}
+
 model User {
   id            String           @id @default(uuid())
   firstName     String
@@ -79,6 +100,9 @@ model Restaurant {
   closingTime        String?
   tableCount         Int?
   avgSeatingCapacity Int?
+  taxEnabled         Boolean          @default(false)
+  taxRate            Decimal?         @db.Decimal(5, 2)
+  serviceChargeRate  Decimal?         @db.Decimal(5, 2)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   users              RestaurantUser[]
@@ -90,6 +114,7 @@ model Restaurant {
   menu               Menu?
   menuCategories     MenuCategory[]
   menuItems          MenuItem[]
+  orders             Order[]
 }
 
 model RestaurantUser {
@@ -134,6 +159,7 @@ model Table {
   updatedAt    DateTime      @updatedAt
   restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   reservations Reservation[]
+  orders       Order[]
 
   @@unique([restaurantId, tableNumber])
   @@index([restaurantId])
@@ -159,6 +185,7 @@ model Customer {
   restaurant        Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   reservations      Reservation[]
   tags              CustomerTagAssignment[]
+  orders            Order[]
 
   @@unique([restaurantId, phone])
   @@index([restaurantId])
@@ -216,6 +243,7 @@ model Reservation {
   restaurant      Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   table           Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
   customer        Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orders          Order[]
 
   @@index([restaurantId])
   @@index([reservationDate])
@@ -296,10 +324,71 @@ model MenuItem {
   category               MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   menu                   Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
   restaurant             Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderItems             OrderItem[]
 
   @@index([restaurantId])
   @@index([menuId])
   @@index([categoryId])
   @@index([categoryId, displayOrder])
   @@index([restaurantId, isActive])
+}
+
+model Order {
+  id                  String        @id @default(uuid())
+  restaurantId        String
+  customerId          String?
+  reservationId       String?
+  tableId             String?
+  orderNumber         String
+  status              OrderStatus   @default(DRAFT)
+  source              OrderSource   @default(DASHBOARD)
+  notes               String?
+  subtotal            Decimal       @db.Decimal(10, 2) @default(0)
+  discountAmount      Decimal       @db.Decimal(10, 2) @default(0)
+  taxAmount           Decimal       @db.Decimal(10, 2) @default(0)
+  serviceChargeAmount Decimal       @db.Decimal(10, 2) @default(0)
+  totalAmount         Decimal       @db.Decimal(10, 2) @default(0)
+  completedAt         DateTime?
+  confirmedAt         DateTime?
+  preparingAt         DateTime?
+  readyAt             DateTime?
+  servedAt            DateTime?
+  cancelledAt         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  restaurant          Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  reservation         Reservation?  @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  table               Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  items               OrderItem[]
+
+  @@unique([restaurantId, orderNumber])
+  @@index([restaurantId])
+  @@index([customerId])
+  @@index([reservationId])
+  @@index([tableId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([restaurantId, status])
+  @@index([restaurantId, createdAt])
+}
+
+model OrderItem {
+  id                String   @id @default(uuid())
+  orderId           String
+  menuItemId        String
+  itemNameSnapshot  String
+  unitPriceSnapshot Decimal  @db.Decimal(10, 2)
+  quantity          Int
+  lineTotal         Decimal  @db.Decimal(10, 2)
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem          MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([menuItemId])
 }
