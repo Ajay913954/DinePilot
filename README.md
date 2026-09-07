@@ -78,6 +78,18 @@ dinepilot/
   - Live Digital Menu Preview modal embedded directly in dashboard.
 - **Public Customer Digital Menu (`/r/:slug` & `/r/:slug/menu`)**: Responsive customer menu page with category navigation, dish search, and dietary preference filters.
 
+### 🛒 Day 7 — Restaurant Order Management & Financial Engine
+- **PostgreSQL Order Data Model**: Schema covering `Order` and `OrderItem` linked to `Restaurant`, `Customer`, `Table`, `Reservation`, and `MenuItem`. Uses PostgreSQL `Decimal(10, 2)` for precise currency calculations.
+- **Snapshot Pricing & Invariance**: Captures `itemNameSnapshot` and `unitPriceSnapshot` at order time, ensuring historical orders and accounting totals remain strictly unchanged when menu prices are updated in the future.
+- **Order Status State Machine Engine**: Enforces strict lifecycle transitions (`DRAFT` → `PLACED` → `CONFIRMED` → `PREPARING` → `READY` → `SERVED` → `COMPLETED` / `CANCELLED`), preventing illegal status jumps and protecting finalized orders from post-completion tampering.
+- **Customer CRM Spend Integration**: Automatically aggregates completed orders into customer CRM profiles (`completedOrders`, `totalOrderValue`, `avgOrderValue`), while strictly excluding cancelled orders from customer spend metrics.
+- **Role Authorization & Audit Trail**: `STAFF` can create and advance kitchen order statuses, while manual discounts and advanced cancellations require `OWNER` or `MANAGER` privileges. All order actions generate immutable audit log entries.
+- **Interactive Staff Order Studio (`/dashboard/orders`)**:
+  - Top metric cards (Today's Orders, Gross Order Value, Active Orders, Completed, Cancelled).
+  - Search & filter toolbar (Order #, Customer name/phone, Status tabs, Source, Date).
+  - Order creation modal with live category menu browser, custom item notes, and instant bill breakdown.
+  - Order detail drawer with real-time status transition controls, snapshot item list, and audit history.
+
 ---
 
 ## 🗄️ Database Schema Blueprint
@@ -92,13 +104,19 @@ erDiagram
     Restaurant ||--o{ CustomerTag : "owns tags"
     Restaurant ||--o{ Reservation : "has bookings"
     Restaurant ||--o{ Menu : "has primary menu"
+    Restaurant ||--o{ Order : "manages"
     Restaurant ||--o{ AuditLog : "records"
     Menu ||--o{ MenuCategory : "contains"
     MenuCategory ||--o{ MenuItem : "contains"
     Customer ||--o{ Reservation : "places"
     Customer ||--o{ CustomerTagAssignment : "tagged with"
+    Customer ||--o{ Order : "places"
     CustomerTag ||--o{ CustomerTagAssignment : "assigned to"
     Table ||--o{ Reservation : "assigned to"
+    Table ||--o{ Order : "assigned to"
+    Reservation ||--o{ Order : "linked to"
+    MenuItem ||--o{ OrderItem : "ordered in"
+    Order ||--o{ OrderItem : "contains"
 ```
 
 ---
@@ -128,7 +146,7 @@ Copy `.env.example` to `.env`:
 | `npm run prisma:migrate` | Run Prisma database migrations (`prisma migrate dev`) |
 | `npm run prisma:seed` | Run development database seed script |
 | `npm run prisma:studio` | Open Prisma Studio GUI for database visual inspection |
-| `npx tsx apps/api/src/tests/run_all_tests.ts` | **Run Master Test Suite** (Executes all 7 test suites: Auth, Tenant Boundaries, Onboarding, Reservations, Customer CRM, Menu Management, & Security) |
+| `npx tsx apps/api/src/tests/run_all_tests.ts` | **Run Master Test Suite** (Executes all 8 test suites: Auth, Tenant Boundaries, Onboarding, Reservations, Customer CRM, Menu Management, Security & Orders) |
 | `npx tsx apps/api/src/tests/run_auth_tests.ts` | Run authentication engine verification tests |
 | `npx tsx apps/api/src/tests/run_security_tenant_tests.ts` | Run multi-tenant boundary isolation & token security tests |
 | `npx tsx apps/api/src/tests/run_day3_onboarding_tests.ts` | Run restaurant onboarding & slug collision tests |
@@ -136,12 +154,14 @@ Copy `.env.example` to `.env`:
 | `npx tsx apps/api/src/tests/run_day5_customer_crm_tests.ts` | Run Day 5 Customer CRM, phone normalization, classification & merge tests |
 | `npx tsx apps/api/src/tests/run_day6_menu_tests.ts` | Run Day 6 Menu Management, Decimal precision, availability toggle & public API tests |
 | `npx tsx apps/api/src/tests/run_day6_security_menu_tests.ts` | Run Day 6 Menu Security tests (STAFF isolation, cross-tenant relationship integrity & force-delete policy) |
+| `npx tsx apps/api/src/tests/run_day7_order_tests.ts` | **Run Day 7 Order Management & Security tests** (Decimal pricing, price snapshots, status transitions & customer spend integration) |
 
 ---
 
 ## 🔒 Security & Multi-Tenant Boundaries
 
 - **Tenant Isolation**: Every database operation verifies tenant authorization via `restaurantId`. Cross-tenant requests return `403 Forbidden` / `404 Not Found`.
-- **Role Enforcement**: Sensitive operations (`mergeCustomers`, `deleteTable`, `deleteCustomer`, `addTag`, `deleteCategory`, `deleteMenuItem`) require `OWNER` or `MANAGER` roles via `requireRestaurantRole`.
+- **Role Enforcement**: Sensitive operations (`mergeCustomers`, `deleteTable`, `deleteCustomer`, `addTag`, `deleteCategory`, `deleteMenuItem`, `manualDiscounts`, `advancedCancellations`) require `OWNER` or `MANAGER` roles via `requireRestaurantRole`.
 - **Privacy Protection**: Internal customer notes are kept strictly private on authenticated backend routes and are never exposed on public restaurant endpoints (`/r/:slug`).
 - **Data Veracity**: 100% of displayed operational and customer metrics come directly from real PostgreSQL queries with zero hardcoded or fake numbers.
+
