@@ -508,6 +508,30 @@ const OrderDetailModal: React.FC<{
               <span>Total Bill Amount</span>
               <span className="text-indigo-600 dark:text-indigo-400">₹{order.totalAmount.toFixed(2)}</span>
             </div>
+
+            {/* Payment Status Summary */}
+            <div className="border-t border-gray-200 dark:border-gray-700/80 pt-2 space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-gray-700 dark:text-slate-300">Payment Status:</span>
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                  order.paymentStatus === 'PAID'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : order.paymentStatus === 'PARTIALLY_PAID'
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    : 'bg-slate-700 text-slate-300'
+                }`}>
+                  {order.paymentStatus || (order.bill?.status) || 'UNBILLED'}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                <span>Amount Paid:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">₹{(order.amountPaid ?? order.bill?.amountPaid ?? 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                <span>Amount Due:</span>
+                <span className="font-bold text-rose-600 dark:text-rose-400">₹{(order.amountDue ?? order.bill?.amountDue ?? order.totalAmount).toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         </div>
 

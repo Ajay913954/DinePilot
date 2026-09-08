@@ -13,6 +13,8 @@ import reservationRoutes from './routes/reservation.routes.js';
 import customerRoutes from './routes/customer.routes.js';
 import menuRoutes from './routes/menu.routes.js';
 import orderRoutes from './routes/order.routes.js';
+import billRoutes from './routes/bill.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 
 const app = express();
 
@@ -44,6 +46,9 @@ app.use('/api/reservations', reservationRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/payments', paymentRoutes);
+
 
 // 404 Route Handler
 app.use('*', (_req, res) => {

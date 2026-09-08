@@ -255,12 +255,20 @@ export const CustomerProfilePage: React.FC = () => {
                 <span className="font-semibold text-emerald-400">{customer.classification}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Completed Orders:</span>
-                <span className="font-semibold text-indigo-400">{customer.stats.completedOrders || 0}</span>
+                <span className="text-slate-400">Total Orders:</span>
+                <span className="font-semibold text-indigo-400">{customer.stats.totalOrders || 0} ({customer.stats.completedOrders || 0} completed)</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Total Order Value:</span>
-                <span className="font-semibold text-emerald-400">₹{(customer.stats.totalOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span className="font-semibold text-white">₹{(customer.stats.totalOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Total Amount Paid:</span>
+                <span className="font-semibold text-emerald-400">₹{(customer.stats.totalPaid || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Outstanding Balance:</span>
+                <span className="font-semibold text-rose-400">₹{(customer.stats.outstandingAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Avg Order Value:</span>

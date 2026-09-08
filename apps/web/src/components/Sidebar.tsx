@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, setMobileO
     { label: 'Reviews', path: '/reviews', icon: Star, active: false },
     { label: 'Analytics', path: '/analytics', icon: BarChart3, active: false },
     { label: 'Settings', path: '/settings', icon: Settings, active: true },
-    { label: 'Billing', path: '/billing', icon: CreditCard, active: false },
+    { label: 'Payments', path: '/payments', icon: CreditCard, active: true },
   ];
 
   const sidebarContent = (

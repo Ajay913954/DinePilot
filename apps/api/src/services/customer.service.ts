@@ -40,7 +40,7 @@ export class CustomerService {
   /**
    * Helper to compute full stats for a customer (including reservations & orders)
    */
-  static calculateCustomerStats(reservations: any[] = [], orders: any[] = []): CustomerStats {
+  static calculateCustomerStats(reservations: any[] = [], orders: any[] = [], payments: any[] = []): CustomerStats {
     const totalReservations = reservations.length;
     const completedReservations = reservations.filter((r) => r.status === ReservationStatus.COMPLETED);
     const completedVisits = completedReservations.length;
@@ -76,12 +76,20 @@ export class CustomerService {
     const totalGuests = partySource.reduce((sum, r) => sum + r.guestCount, 0);
     const avgPartySize = partySource.length > 0 ? Math.round((totalGuests / partySource.length) * 10) / 10 : 0;
 
-    // Order Spend Statistics (Completed Orders Only)
+    // Order & Payment Financial Statistics
+    const validOrders = orders.filter((o) => o.status !== 'CANCELLED');
+    const totalOrders = validOrders.length;
     const completedOrdersList = orders.filter((o) => o.status === 'COMPLETED');
     const completedOrders = completedOrdersList.length;
-    const totalOrderValueRaw = completedOrdersList.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+    const totalOrderValueRaw = validOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
     const totalOrderValue = Math.round(totalOrderValueRaw * 100) / 100;
-    const avgOrderValue = completedOrders > 0 ? Math.round((totalOrderValue / completedOrders) * 100) / 100 : 0;
+    const avgOrderValue = totalOrders > 0 ? Math.round((totalOrderValue / totalOrders) * 100) / 100 : 0;
+
+    const totalPaidRaw = (payments || [])
+      .filter((p: any) => p.status === 'SUCCESS')
+      .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const totalPaid = Math.round(totalPaidRaw * 100) / 100;
+    const outstandingAmount = Math.max(0, Math.round((totalOrderValue - totalPaid) * 100) / 100);
 
     return {
       totalReservations,
@@ -92,8 +100,11 @@ export class CustomerService {
       lastVisit,
       nextVisit,
       avgPartySize,
+      totalOrders,
       completedOrders,
       totalOrderValue,
+      totalPaid,
+      outstandingAmount,
       avgOrderValue,
     };
   }
@@ -250,6 +261,13 @@ export class CustomerService {
             totalAmount: true,
           },
         },
+        payments: {
+          select: {
+            id: true,
+            status: true,
+            amount: true,
+          },
+        },
       },
     });
 
@@ -257,7 +275,7 @@ export class CustomerService {
       throw new AppError('Customer not found.', 404, 'CUSTOMER_NOT_FOUND');
     }
 
-    const stats = this.calculateCustomerStats(customer.reservations, customer.orders);
+    const stats = this.calculateCustomerStats(customer.reservations, customer.orders, customer.payments);
     const lastVisitDate = stats.lastVisit ? new Date(stats.lastVisit) : null;
     const classification = this.calculateClassification(customer.isVip, stats.completedVisits, lastVisitDate);
 

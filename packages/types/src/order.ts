@@ -72,6 +72,16 @@ export interface OrderResponse {
     guestCount: number;
   } | null;
   items: OrderItemResponse[];
+  bill?: {
+    id: string;
+    invoiceNumber: string;
+    amountPaid: number;
+    amountDue: number;
+    status: string;
+  } | null;
+  amountPaid?: number;
+  amountDue?: number;
+  paymentStatus?: string;
 }
 
 export interface OrderListItem {
@@ -85,6 +95,10 @@ export interface OrderListItem {
   customerName: string | null;
   customerPhone: string | null;
   tableNumber: string | null;
+  amountPaid?: number;
+  amountDue?: number;
+  paymentStatus?: string;
+  invoiceNumber?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -6,3 +6,5 @@ export * from './reservation.js';
 export * from './customer.js';
 export * from './menu.js';
 export * from './order.js';
+export * from './billing.js';
+

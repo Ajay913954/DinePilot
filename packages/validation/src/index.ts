@@ -5,3 +5,5 @@ export * from './reservation.schema.js';
 export * from './customer.schema.js';
 export * from './menu.schema.js';
 export * from './order.schema.js';
+export * from './billing.schema.js';
+

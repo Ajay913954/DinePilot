@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { restaurantApi, reservationApi, tableApi, customerApi, orderApi } from '../services/api';
+import { restaurantApi, reservationApi, tableApi, customerApi, orderApi, billingApi } from '../services/api';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Calendar, Users, Grid3X3, Star, Sparkles, Settings, ExternalLink, PlusCircle, Clock, CheckCircle2, UserCheck, UserPlus, ShoppingBag, DollarSign } from 'lucide-react';
+import { Calendar, Users, Grid3X3, Star, Sparkles, Settings, ExternalLink, PlusCircle, Clock, CheckCircle2, UserCheck, UserPlus, ShoppingBag, DollarSign, CreditCard } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,18 +15,20 @@ export const DashboardPage: React.FC = () => {
   const [tables, setTables] = useState<any[]>([]);
   const [customerStats, setCustomerStats] = useState<any>(null);
   const [orderStats, setOrderStats] = useState<any>(null);
+  const [billingMetrics, setBillingMetrics] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const [restRes, resvRes, tblRes, custRes, ordRes] = await Promise.all([
+        const [restRes, resvRes, tblRes, custRes, ordRes, billRes] = await Promise.all([
           restaurantApi.getMe(),
           reservationApi.getReservations({ date: todayStr }),
           tableApi.getTables(),
           customerApi.getCustomerStats().catch(() => ({ stats: { totalCustomers: 0, newCustomers: 0, returningCustomers: 0, vipCustomers: 0 } })),
           orderApi.getOrderStats().catch(() => null),
+          billingApi.getBillingMetrics().catch(() => null),
         ]);
 
         setRestaurant(restRes.restaurant);
@@ -34,6 +36,7 @@ export const DashboardPage: React.FC = () => {
         setTables(tblRes.tables || []);
         setCustomerStats(custRes.stats || null);
         setOrderStats(ordRes || null);
+        setBillingMetrics(billRes || null);
       } catch (err) {
         console.error('Dashboard data load error:', err);
       } finally {
@@ -124,6 +127,22 @@ export const DashboardPage: React.FC = () => {
               </p>
               <p className="text-[11px] text-slate-400 mt-2">
                 {orderStats?.todayOrdersCount || 0} orders today • {orderStats?.activeOrdersCount || 0} active
+              </p>
+            </Card>
+          </Link>
+
+          {/* Card 2B: Collected Revenue */}
+          <Link to="/payments">
+            <Card glass className="p-6 relative overflow-hidden group border-amber-500/30 hover:border-amber-500/50 transition-all duration-300 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-400">Collected Revenue</span>
+                <CreditCard className="w-5 h-5 text-amber-400" />
+              </div>
+              <p className="text-3xl font-extrabold text-amber-400">
+                ₹{(billingMetrics?.todayPaidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-2">
+                Paid: ₹{billingMetrics?.todayPaidAmount || 0} • Due: ₹{billingMetrics?.outstandingAmount || 0}
               </p>
             </Card>
           </Link>

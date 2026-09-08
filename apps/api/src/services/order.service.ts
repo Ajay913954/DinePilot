@@ -80,6 +80,18 @@ export class OrderService {
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
       })),
+      bill: order.bill
+        ? {
+            id: order.bill.id,
+            invoiceNumber: order.bill.invoiceNumber,
+            amountPaid: Number(order.bill.amountPaid),
+            amountDue: Number(order.bill.amountDue),
+            status: order.bill.status,
+          }
+        : null,
+      amountPaid: order.bill ? Number(order.bill.amountPaid) : 0,
+      amountDue: order.bill ? Number(order.bill.amountDue) : Number(order.totalAmount),
+      paymentStatus: order.bill ? order.bill.status : 'UNBILLED',
     };
   }
 
@@ -287,6 +299,7 @@ export class OrderService {
         include: {
           customer: { select: { name: true, phone: true } },
           table: { select: { tableNumber: true } },
+          bill: { select: { id: true, invoiceNumber: true, amountPaid: true, amountDue: true, status: true } },
           _count: { select: { items: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -296,7 +309,7 @@ export class OrderService {
       prisma.order.count({ where }),
     ]);
 
-    const formattedItems: OrderListItem[] = orders.map((o) => ({
+    const formattedItems: OrderListItem[] = orders.map((o: any) => ({
       id: o.id,
       restaurantId: o.restaurantId,
       orderNumber: o.orderNumber,
@@ -307,6 +320,10 @@ export class OrderService {
       customerName: o.customer ? o.customer.name : null,
       customerPhone: o.customer ? o.customer.phone : null,
       tableNumber: o.table ? o.table.tableNumber : null,
+      amountPaid: o.bill ? Number(o.bill.amountPaid) : 0,
+      amountDue: o.bill ? Number(o.bill.amountDue) : Number(o.totalAmount),
+      paymentStatus: o.bill ? o.bill.status : 'UNBILLED',
+      invoiceNumber: o.bill ? o.bill.invoiceNumber : null,
       createdAt: o.createdAt.toISOString(),
       updatedAt: o.updatedAt.toISOString(),
     }));
@@ -337,6 +354,7 @@ export class OrderService {
         customer: true,
         table: true,
         reservation: true,
+        bill: true,
         items: {
           orderBy: { createdAt: 'asc' },
         },

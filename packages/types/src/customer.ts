@@ -15,8 +15,11 @@ export interface CustomerStats {
   lastVisit: string | null;
   nextVisit: string | null;
   avgPartySize: number;
+  totalOrders?: number;
   completedOrders?: number;
   totalOrderValue?: number;
+  totalPaid?: number;
+  outstandingAmount?: number;
   avgOrderValue?: number;
 }
 

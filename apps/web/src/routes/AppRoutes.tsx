@@ -13,6 +13,7 @@ import { CustomerProfilePage } from '../pages/CustomerProfilePage';
 import { PublicRestaurantPage } from '../pages/PublicRestaurantPage';
 import { MenuPage } from '../pages/MenuPage';
 import { OrdersPage } from '../pages/OrdersPage';
+import { PaymentsPage } from '../pages/PaymentsPage';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -198,6 +199,26 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <OrdersPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PaymentsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PaymentsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

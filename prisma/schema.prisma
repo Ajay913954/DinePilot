@@ -70,6 +70,31 @@ enum OrderSource {
   OTHER
 }
 
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum BillStatus {
+  OPEN
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
 model User {
   id            String           @id @default(uuid())
   firstName     String
@@ -115,6 +140,8 @@ model Restaurant {
   menuCategories     MenuCategory[]
   menuItems          MenuItem[]
   orders             Order[]
+  bills              Bill[]
+  payments           Payment[]
 }
 
 model RestaurantUser {
@@ -186,6 +213,7 @@ model Customer {
   reservations      Reservation[]
   tags              CustomerTagAssignment[]
   orders            Order[]
+  payments          Payment[]
 
   @@unique([restaurantId, phone])
   @@index([restaurantId])
@@ -362,6 +390,8 @@ model Order {
   reservation         Reservation?  @relation(fields: [reservationId], references: [id], onDelete: SetNull)
   table               Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
   items               OrderItem[]
+  bill                Bill?
+  payments            Payment[]
 
   @@unique([restaurantId, orderNumber])
   @@index([restaurantId])
@@ -392,3 +422,64 @@ model OrderItem {
   @@index([orderId])
   @@index([menuItemId])
 }
+
+model Bill {
+  id                  String        @id @default(uuid())
+  restaurantId        String
+  orderId             String        @unique
+  invoiceNumber       String
+  subtotal            Decimal       @db.Decimal(10, 2)
+  discountAmount      Decimal       @db.Decimal(10, 2)
+  taxAmount           Decimal       @db.Decimal(10, 2)
+  serviceChargeAmount Decimal       @db.Decimal(10, 2)
+  totalAmount         Decimal       @db.Decimal(10, 2)
+  amountPaid          Decimal       @db.Decimal(10, 2) @default(0)
+  amountDue           Decimal       @db.Decimal(10, 2)
+  status              BillStatus    @default(OPEN)
+  issuedAt            DateTime      @default(now())
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  restaurant          Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  order               Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payments            Payment[]
+
+  @@unique([restaurantId, invoiceNumber])
+  @@index([restaurantId])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                   String        @id @default(uuid())
+  restaurantId         String
+  orderId              String
+  billId               String?
+  customerId           String?
+  amount               Decimal       @db.Decimal(10, 2)
+  method               PaymentMethod
+  status               PaymentStatus @default(PENDING)
+  idempotencyKey       String?
+  transactionReference String?
+  gatewayReference     String?
+  notes                String?
+  paidAt               DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  restaurant           Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  order                Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bill                 Bill?         @relation(fields: [billId], references: [id], onDelete: SetNull)
+  customer             Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([restaurantId, idempotencyKey])
+  @@index([restaurantId])
+  @@index([orderId])
+  @@index([billId])
+  @@index([customerId])
+  @@index([status])
+  @@index([method])
+  @@index([createdAt])
+}
+

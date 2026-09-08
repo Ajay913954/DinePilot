@@ -417,3 +417,109 @@ export const orderApi = {
     }),
 };
 
+export const billingApi = {
+  getBills: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    orderId?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.search) query.append('search', params.search);
+    if (params.status) query.append('status', params.status);
+    if (params.orderId) query.append('orderId', params.orderId);
+    if (params.startDate) query.append('startDate', params.startDate);
+    if (params.endDate) query.append('endDate', params.endDate);
+
+    return fetchApi<{ data: any[]; pagination: any }>(`/bills?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  getBillById: (id: string) =>
+    fetchApi<any>(`/bills/${id}`, {
+      method: 'GET',
+    }),
+
+  getBillByOrder: (orderId: string) =>
+    fetchApi<any>(`/bills/order/${orderId}`, {
+      method: 'GET',
+    }),
+
+  createBill: (orderId: string) =>
+    fetchApi<any>('/bills', {
+      method: 'POST',
+      body: JSON.stringify({ orderId }),
+    }),
+
+  getBillingMetrics: () =>
+    fetchApi<any>('/bills/metrics', {
+      method: 'GET',
+    }),
+
+  getPayments: (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    method?: string;
+    orderId?: string;
+    billId?: string;
+    customerId?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.search) query.append('search', params.search);
+    if (params.status) query.append('status', params.status);
+    if (params.method) query.append('method', params.method);
+    if (params.orderId) query.append('orderId', params.orderId);
+    if (params.billId) query.append('billId', params.billId);
+    if (params.customerId) query.append('customerId', params.customerId);
+    if (params.startDate) query.append('startDate', params.startDate);
+    if (params.endDate) query.append('endDate', params.endDate);
+
+    return fetchApi<{ data: any[]; pagination: any }>(`/payments?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  getPaymentById: (id: string) =>
+    fetchApi<any>(`/payments/${id}`, {
+      method: 'GET',
+    }),
+
+  getOrderPayments: (orderId: string) =>
+    fetchApi<any[]>(`/payments/order/${orderId}`, {
+      method: 'GET',
+    }),
+
+  createPayment: (input: {
+    orderId: string;
+    amount: number;
+    method: string;
+    status?: string;
+    idempotencyKey?: string;
+    transactionReference?: string;
+    notes?: string;
+  }) =>
+    fetchApi<any>('/payments', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updatePaymentStatus: (id: string, status: string) =>
+    fetchApi<any>(`/payments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+
