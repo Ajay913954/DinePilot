@@ -90,6 +90,20 @@ dinepilot/
   - Order creation modal with live category menu browser, custom item notes, and instant bill breakdown.
   - Order detail drawer with real-time status transition controls, snapshot item list, and audit history.
 
+### 💳 Day 8 — Payments & Billing Foundation
+- **PostgreSQL Payments & Billing Schema**: Models covering `Bill` (invoice snapshots) and `Payment` (transaction ledger records) linked to `Restaurant`, `Order`, and `Customer`. All financial fields use PostgreSQL `Decimal(10, 2)` for zero-floating-point-error accounting.
+- **Invoice Snapshot Principle**: Captures order financial totals (`subtotal`, `discountAmount`, `taxAmount`, `serviceChargeAmount`, `totalAmount`) at billing time, preserving historical billing integrity.
+- **Sequential Invoice Number Generator**: Safe sequential invoice number generator (`DP-2026-XXXXXX`) using transaction locks and retry loops to guarantee uniqueness (`@@unique([restaurantId, invoiceNumber])`).
+- **Multiple & Partial Payments**: Supports multiple payments per order across methods (`CASH`, `UPI`, `CARD`, `BANK_TRANSFER`, `OTHER`). Recalculates `amountPaid` and `amountDue` in real time, transitioning bill statuses (`OPEN` → `PARTIALLY_PAID` → `PAID`). Rejects overpayment attempts.
+- **Idempotency Protection**: Transactional idempotency protection using `idempotencyKey` prevents duplicate payment submissions during network retries.
+- **Payment Status State Machine**: Enforces valid status transitions (`PENDING` → `PROCESSING` → `SUCCESS` / `FAILED` / `CANCELLED`), blocking illegal jumps such as `FAILED` → `SUCCESS`.
+- **Gateway-Ready Architecture**: Clean `PaymentGatewayAdapter` interface abstraction ready for future payment gateways (Razorpay, Stripe, UPI webhooks).
+- **Interactive Payments Ledger (`/payments`)**:
+  - Live financial banner (Today's Sales, Collected Revenue, Outstanding Amount, Paid vs Partial Orders).
+  - Search & filter toolbar (Invoice #, Order #, Customer name/phone, Payment Method, Status).
+  - Record Manual Payment modal with order selection, amount verification, method selection, and transaction ref.
+  - Printable Receipt Preview modal formatted with restaurant info, customer details, item breakdown, taxes, and payment transaction history.
+
 ---
 
 ## 🗄️ Database Schema Blueprint
@@ -105,18 +119,24 @@ erDiagram
     Restaurant ||--o{ Reservation : "has bookings"
     Restaurant ||--o{ Menu : "has primary menu"
     Restaurant ||--o{ Order : "manages"
+    Restaurant ||--o{ Bill : "issues"
+    Restaurant ||--o{ Payment : "collects"
     Restaurant ||--o{ AuditLog : "records"
     Menu ||--o{ MenuCategory : "contains"
     MenuCategory ||--o{ MenuItem : "contains"
     Customer ||--o{ Reservation : "places"
     Customer ||--o{ CustomerTagAssignment : "tagged with"
     Customer ||--o{ Order : "places"
+    Customer ||--o{ Payment : "makes"
     CustomerTag ||--o{ CustomerTagAssignment : "assigned to"
     Table ||--o{ Reservation : "assigned to"
     Table ||--o{ Order : "assigned to"
     Reservation ||--o{ Order : "linked to"
     MenuItem ||--o{ OrderItem : "ordered in"
     Order ||--o{ OrderItem : "contains"
+    Order ||--o| Bill : "billed as"
+    Order ||--o{ Payment : "paid via"
+    Bill ||--o{ Payment : "contains"
 ```
 
 ---
@@ -146,7 +166,7 @@ Copy `.env.example` to `.env`:
 | `npm run prisma:migrate` | Run Prisma database migrations (`prisma migrate dev`) |
 | `npm run prisma:seed` | Run development database seed script |
 | `npm run prisma:studio` | Open Prisma Studio GUI for database visual inspection |
-| `npx tsx apps/api/src/tests/run_all_tests.ts` | **Run Master Test Suite** (Executes all 8 test suites: Auth, Tenant Boundaries, Onboarding, Reservations, Customer CRM, Menu Management, Security & Orders) |
+| `npx tsx apps/api/src/tests/run_all_tests.ts` | **Run Master Test Suite** (Executes all 9 test suites: Auth, Tenant Boundaries, Onboarding, Reservations, Customer CRM, Menu Management, Security, Orders & Payments) |
 | `npx tsx apps/api/src/tests/run_auth_tests.ts` | Run authentication engine verification tests |
 | `npx tsx apps/api/src/tests/run_security_tenant_tests.ts` | Run multi-tenant boundary isolation & token security tests |
 | `npx tsx apps/api/src/tests/run_day3_onboarding_tests.ts` | Run restaurant onboarding & slug collision tests |
@@ -154,7 +174,8 @@ Copy `.env.example` to `.env`:
 | `npx tsx apps/api/src/tests/run_day5_customer_crm_tests.ts` | Run Day 5 Customer CRM, phone normalization, classification & merge tests |
 | `npx tsx apps/api/src/tests/run_day6_menu_tests.ts` | Run Day 6 Menu Management, Decimal precision, availability toggle & public API tests |
 | `npx tsx apps/api/src/tests/run_day6_security_menu_tests.ts` | Run Day 6 Menu Security tests (STAFF isolation, cross-tenant relationship integrity & force-delete policy) |
-| `npx tsx apps/api/src/tests/run_day7_order_tests.ts` | **Run Day 7 Order Management & Security tests** (Decimal pricing, price snapshots, status transitions & customer spend integration) |
+| `npx tsx apps/api/src/tests/run_day7_order_tests.ts` | Run Day 7 Order Management & Security tests (Decimal pricing, price snapshots, status transitions & customer spend integration) |
+| `npx tsx apps/api/src/tests/run_day8_payment_tests.ts` | **Run Day 8 Payments & Billing Foundation tests** (Decimal pricing, invoice numbers, idempotency, overpayment protection & state machine) |
 
 ---
 
